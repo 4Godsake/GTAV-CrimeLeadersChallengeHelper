@@ -7,13 +7,23 @@ import com.melloware.jintellitype.JIntellitype;
 public class GlobalHotkeyResourceManagement {
 
     public static void initResources() {
-        JIntellitype.getInstance();
-        System.out.println("init resources...");
+        try{
+            JIntellitype.getInstance();
+            System.out.println("init resources...");
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
     }
 
     public static void addListener() {
-        F5.addListener();
-        CtrlE.addListener();
+        try{
+            F5.addListener();
+            CtrlE.addListener();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
     }
 
     public static void releaseResources() {

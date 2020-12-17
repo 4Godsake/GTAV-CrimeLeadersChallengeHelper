@@ -143,16 +143,16 @@ public class Server {
                      message = JSON.parseObject(messageJson,MessageTemplate.class);
                     //for(PrintWriter o: allOut){
                     //    o.println(message);
-                    if (message.getCommand().equals("SET_NICKNAME")){//新增马甲
+                    if ("SET_NICKNAME".equals(message.getCommand())){//新增马甲
                         addNickName(clientIp,message.getNickname());
                         System.out.println("新增马甲："+message.getNickname());
-                    }else if(message.getCommand().equals("QUIT")){//全体强退
+                    }else if("QUIT".equals(message.getCommand())){//全体强退
                         System.out.println(message.getNickname()+" client send quit");
                         sendMessage(message.getNickname()+" press F5, quiting","QUIT_ALL","server");
-                    }else if(message.getCommand().equals("PING_GET")){//延迟检测
+                    }else if("PING_GET".equals(message.getCommand())){//延迟检测
                         System.out.println(message.getNickname()+" client send ping");
                         pingMessage("pong","PING",clientIp,message.getTime());
-                    }else if(message.getCommand().equals("LIST")){//查看当前在线
+                    }else if("LIST".equals(message.getCommand())){//查看当前在线
                         BeanUtil.copyProperties(message, respMessage);
                         StringBuffer tempNick = new StringBuffer();
                         tempNick.append("当前在线："+ allNickname.size()+"\n");
@@ -162,6 +162,9 @@ public class Server {
                         respMessage.setNickname("server");
                         respMessage.setMessage(tempNick.toString());
                         sendSingleMessage(respMessage, clientIp);
+                    }else if ("ENTER".equals(message.getCommand())){//同步回车
+                        System.out.println(message.getNickname()+" client request send Command ENTER");
+                        sendMessage(message.getNickname()+" request everyone pressing ENTER","ENTER_ALL","server");
                     }
                     else {
                         BeanUtil.copyProperties(message, respMessage);
@@ -177,9 +180,10 @@ public class Server {
             }finally{
                 //当客户端断线时，要将输出流从集合中删除
                 //allOut.remove(pw);
+                String quitName = allNickname.get(clientIp);
                 removeOut(clientIp,pw);
                 removeNickName(clientIp);
-                sendMessage("someone disconnected 当前连接数:"+ allOut.size(),"do nothing","server");
+                sendMessage(quitName+" disconnected 当前连接数:"+ allOut.size(),"do nothing","server");
                 if(socket != null){
                     try{
                         socket.close();

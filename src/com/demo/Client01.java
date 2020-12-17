@@ -3,6 +3,7 @@ package com.demo;
 import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson.JSON;
+import com.demo.hotkey.CtrlE;
 import com.demo.hotkey.F5;
 import com.demo.hotkey.GlobalHotkeyResourceManagement;
 import com.demo.vo.MessageTemplate;
@@ -22,20 +23,28 @@ import static org.fusesource.jansi.Ansi.Color.*;
 import static org.fusesource.jansi.Ansi.ansi;
 
 public class Client01 {
-
+    public static PrintWriter printWriter;
+    public static String nickName;
     private Socket socket;
+
 
     public Client01(){
         String IP_TENCENT_CLOUD = "120.53.227.170";
         String IP_LOCAL = "localhost";
         try {
-            socket = new Socket(IP_TENCENT_CLOUD, 8088);
+            socket = new Socket(IP_LOCAL, 8088);
         } catch (Exception e) {
             System.out.println("服务连接失败，请检查服务状态");
         }
-        GlobalHotkeyResourceManagement.initResources();
-        GlobalHotkeyResourceManagement.addListener();
-        F5.register();
+        try{
+            GlobalHotkeyResourceManagement.initResources();
+            GlobalHotkeyResourceManagement.addListener();
+            F5.register();
+            CtrlE.register();
+        } catch (Exception exception){
+            exception.printStackTrace();
+        }
+
     }
 
     private class ServerHandler implements Runnable{
@@ -57,6 +66,8 @@ public class Client01 {
                     if (message.getCommand().equals("QUIT_ALL")){
                         //quit后逻辑
                         AnsiConsole.out.println(ansi().fg(RED).a("quiting now").reset());
+                        String command = "taskkill /f /im GTA5.exe";
+                        Runtime.getRuntime().exec(command);
                     }else if (message.getCommand().equals("PING")){
                         Date date_now = DateUtil.date();
                         long delay = DateUtil.between(date_now, message.getTime(), DateUnit.MS);
@@ -80,11 +91,12 @@ public class Client01 {
             OutputStream out = socket.getOutputStream();
             OutputStreamWriter osw = new OutputStreamWriter(out, "UTF-8");
             PrintWriter pw = new PrintWriter(osw, true);
+            printWriter = pw;
             //创建Scanner读取用户输入内容
             Scanner scanner = new Scanner(System.in);
             Thread.sleep(1000);
             AnsiConsole.out.println(ansi().fg(BLUE).a("请输入昵称：").reset());
-            String nickName = scanner.nextLine();
+            nickName = scanner.nextLine();
             AnsiConsole.out.println(ansi().fg(BLUE).a("您将使用以下昵称："+nickName).reset());
             MessageTemplate message = new MessageTemplate();
             //将昵称传到服务器放入列表里
@@ -97,9 +109,7 @@ public class Client01 {
                 message.setMessage(scanner.nextLine());
                 message.setTime(DateUtil.date());
                 //如果消息内容是F5，设置消息指令信息为“quit”
-                if (message.getMessage().equals("/F5")){
-                    message.setCommand("QUIT");
-                }else if (message.getMessage().equals("/ping")){
+                if (message.getMessage().equals("/ping")){
                     message.setCommand("PING_GET");
                 }else if (message.getMessage().equals("/list")){
                     message.setCommand("LIST");

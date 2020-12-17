@@ -15,12 +15,12 @@ public class CtrlE {
 
     public static void register() {
         JIntellitype.getInstance().registerHotKey(99, JIntellitypeConstants.MOD_CONTROL, (int)'E');
-        System.out.println("register...");
+        System.out.println("register for CTRL+E...");
     }
 
     public static void unregister() {
         JIntellitype.getInstance().unregisterHotKey(99);
-        System.out.println("unregister...");
+        System.out.println("unregister for CTRL+E...");
     }
 
     public static void addListener() {

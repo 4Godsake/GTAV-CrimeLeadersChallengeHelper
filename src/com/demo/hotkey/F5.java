@@ -1,6 +1,7 @@
 package com.demo.hotkey;
 
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.extra.pinyin.PinyinUtil;
 import com.alibaba.fastjson.JSON;
 import com.demo.Client;
 import com.demo.vo.MessageTemplate;
@@ -14,16 +15,17 @@ public class F5 {
 
     public static void register() {
         JIntellitype.getInstance().registerHotKey(88, 0, 116);
-        System.out.println("register...");
+        System.out.println("register for F5...");
     }
 
     public static void unregister() {
         JIntellitype.getInstance().unregisterHotKey(88);
-        System.out.println("unregister...");
+        System.out.println("unregister for F5...");
     }
 
     public static void addListener() {
         JIntellitype.getInstance().addHotKeyListener(new HotkeyListener() {
+
             @Override
             public void onHotKey(int key) {
                 if(key == 88) {         //你要做的事
