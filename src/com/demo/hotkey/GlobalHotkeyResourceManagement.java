@@ -1,6 +1,5 @@
 package com.demo.hotkey;
 
-import com.melloware.jintellitype.HotkeyListener;
 import com.melloware.jintellitype.JIntellitype;
 
 
@@ -20,10 +19,25 @@ public class GlobalHotkeyResourceManagement {
         try{
             F5.addListener();
             CtrlE.addListener();
-        }catch (Exception e){
+            Ctrl1.addListener();
+            Ctrl2.addListener();
+            Ctrl3.addListener();
+            Ctrl4.addListener();
+            CtrlZ.addListener();
+            }catch (Exception e){
             e.printStackTrace();
         }
 
+    }
+
+    public static void allRegister(){
+        F5.register();
+        CtrlE.register();
+        Ctrl1.register();
+        Ctrl2.register();
+        Ctrl3.register();
+        Ctrl4.register();
+        CtrlZ.register();
     }
 
     public static void releaseResources() {

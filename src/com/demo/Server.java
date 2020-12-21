@@ -123,7 +123,7 @@ public class Server {
             PrintWriter pw = null;
             String clientIp = null;
             try {
-                clientIp = socket.getInetAddress().toString();
+                clientIp = socket.getInetAddress().toString() +":"+ socket.getPort();
                 System.out.println(clientIp);
                 OutputStream os = socket.getOutputStream();
                 OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
@@ -143,12 +143,19 @@ public class Server {
                      message = JSON.parseObject(messageJson,MessageTemplate.class);
                     //for(PrintWriter o: allOut){
                     //    o.println(message);
-                    if ("SET_NICKNAME".equals(message.getCommand())){//新增马甲
+                    if ("HEARTBEAT".equals(message.getCommand())){//心跳包
+                        respMessage.setCommand("SUCCESS");
+                        sendSingleMessage(respMessage,clientIp);
+                    }else if("SET_NICKNAME".equals(message.getCommand())){//新增马甲
                         addNickName(clientIp,message.getNickname());
                         System.out.println("新增马甲："+message.getNickname());
                     }else if("QUIT".equals(message.getCommand())){//全体强退
                         System.out.println(message.getNickname()+" client send quit");
-                        sendMessage(message.getNickname()+" press F5, quiting","QUIT_ALL","server");
+                        BeanUtil.copyProperties(message, respMessage);
+                        respMessage.setCommand("QUIT_ALL");
+                        respMessage.setNickname("server");
+                        respMessage.setMessage(message.getNickname()+" press F5, everyone in room"+message.getRoom()+" quiting");
+                        sendMessage(respMessage);
                     }else if("PING_GET".equals(message.getCommand())){//延迟检测
                         System.out.println(message.getNickname()+" client send ping");
                         pingMessage("pong","PING",clientIp,message.getTime());
@@ -164,7 +171,18 @@ public class Server {
                         sendSingleMessage(respMessage, clientIp);
                     }else if ("ENTER".equals(message.getCommand())){//同步回车
                         System.out.println(message.getNickname()+" client request send Command ENTER");
-                        sendMessage(message.getNickname()+" request everyone pressing ENTER","ENTER_ALL","server");
+                        BeanUtil.copyProperties(message, respMessage);
+                        respMessage.setCommand("ENTER_ALL");
+                        respMessage.setNickname("server");
+                        respMessage.setMessage(message.getNickname()+" request everyone in room"+message.getRoom()+" pressing ENTER");
+                        sendMessage(respMessage);
+                    }else if ("LEFT_CLICK".equals(message.getCommand())){//同步左键
+                        System.out.println(message.getNickname()+" client request send Command LEFT_CLICK");
+                        BeanUtil.copyProperties(message, respMessage);
+                        respMessage.setCommand("LEFT_CLICK_ALL");
+                        respMessage.setNickname("server");
+                        respMessage.setMessage(message.getNickname()+" request everyone in room"+message.getRoom()+" left click");
+                        sendMessage(respMessage);
                     }
                     else {
                         BeanUtil.copyProperties(message, respMessage);

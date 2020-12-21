@@ -12,6 +12,8 @@ public class MessageTemplate {
     String message;
     //指令
     String command;
+    //房间号
+    Integer room;
 
     public MessageTemplate() {
     }
@@ -47,5 +49,13 @@ public class MessageTemplate {
 
     public void setCommand(String command) {
         this.command = command;
+    }
+
+    public Integer getRoom() {
+        return room;
+    }
+
+    public void setRoom(Integer room) {
+        this.room = room;
     }
 }

@@ -15,7 +15,7 @@ public class F5 {
 
     public static void register() {
         JIntellitype.getInstance().registerHotKey(88, 0, 116);
-        System.out.println("register for F5...");
+//        System.out.println("register for F5...");
     }
 
     public static void unregister() {
@@ -31,10 +31,11 @@ public class F5 {
                 if(key == 88) {         //你要做的事
                     System.out.println("you have pressed F5");
                     MessageTemplate quitMessage = new MessageTemplate();
-                    quitMessage.setNickname("someone");
+                    quitMessage.setNickname(Client.nickName);
                     quitMessage.setTime(DateUtil.date());
                     quitMessage.setMessage("");
                     quitMessage.setCommand("QUIT");
+                    quitMessage.setRoom(Client.room);
                     String messageJson = JSON.toJSONString(quitMessage);
                     Client.printWriter.println(messageJson);
 

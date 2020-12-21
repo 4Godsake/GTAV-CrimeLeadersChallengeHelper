@@ -3,11 +3,11 @@ package com.demo;
 import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
-import com.demo.hotkey.CtrlE;
-import com.demo.hotkey.F5;
-import com.demo.hotkey.GlobalHotkeyResourceManagement;
+import com.demo.hotkey.*;
 import com.demo.vo.MessageTemplate;
+import com.sun.xml.internal.ws.util.StringUtils;
 import org.fusesource.jansi.AnsiConsole;
 
 import java.awt.*;
@@ -16,14 +16,20 @@ import java.io.*;
 import java.net.Socket;
 import java.util.Date;
 import java.util.Scanner;
-
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import static org.fusesource.jansi.Ansi.Color.*;
 import static org.fusesource.jansi.Ansi.ansi;
 
 public class Client {
-    public static PrintWriter printWriter;
-    public static String nickName;
-    private Socket socket;
+
+    //定时任务线程池
+    private ExecutorService threadPool;
+
+    public static PrintWriter printWriter = null;
+    public static String nickName = null;
+    public static Integer room = 1;
+    private Socket socket = null;
     Boolean flag = true;
 
 
@@ -33,12 +39,44 @@ public class Client {
 
         try {
             socket = new Socket(IP_TENCENT_CLOUD, 8088);
+            socket.setSoTimeout(8000);
+            threadPool = Executors.newScheduledThreadPool(5);
         } catch (Exception e) {
             System.out.println("服务连接失败，请检查服务状态");
         }
 
-
     }
+
+    static class ConnectionChecker implements Runnable{
+
+        //构造函数设置为public
+        public ConnectionChecker(){
+
+        }
+
+        @Override
+        public void run() {
+            MessageTemplate heartbeat = new MessageTemplate();
+            heartbeat.setCommand("HEARTBEAT");
+            if (nickName==null){
+                nickName = "someone";
+            }
+
+            while(true){
+                try {
+                    Thread.sleep(3000);
+                    heartbeat.setTime(DateUtil.date());
+                    heartbeat.setMessage(nickName+" is still alive");
+                    heartbeat.setNickname(nickName);
+                    printWriter.println(JSON.toJSONString(heartbeat));
+                } catch (Exception e){
+                    System.out.println("失去连接");
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
 
     private class ServerHandler implements Runnable{
 
@@ -56,33 +94,50 @@ public class Client {
                     messageJson = br.readLine();
                     message = JSON.parseObject(messageJson,MessageTemplate.class);
                     //输出消息内容
-                    AnsiConsole.out.println(DateUtil.format(message.getTime(),"HH:mm:ss")+"|"+ansi().fg(GREEN).a(message.getNickname()).reset()+": "+message.getMessage());
-                    if (flag&&message.getCommand().equals("QUIT_ALL")){
+                    if ("SUCCESS".equals(message.getCommand())){
+                        //donothing
+                    }else if (flag && room.equals(message.getRoom()) && "QUIT_ALL".equals(message.getCommand())){
                         //quit后逻辑
+                        AnsiConsole.out.println(DateUtil.format(message.getTime(),"HH:mm:ss")+"|"+ansi().fg(GREEN).a(message.getNickname()).reset()+": "+message.getMessage());
                         AnsiConsole.out.println(ansi().fg(RED).a("quiting now").reset());
                         String command = "taskkill /f /im GTA5.exe";
                         Runtime.getRuntime().exec(command);
-                    }else if (message.getCommand().equals("PING")){
+                    }else if ("PING".equals(message.getCommand())){
                         Date date_now = DateUtil.date();
                         long delay = DateUtil.between(date_now, message.getTime(), DateUnit.MS);
                         AnsiConsole.out.println(ansi().fg(BLUE).a("ping：").reset()+""+delay);
-                    }else if(message.getCommand().equals("ENTER_ALL")){
+                    }else if("ENTER_ALL".equals(message.getCommand())&& room.equals(message.getRoom())){
                         r.keyPress(KeyEvent.VK_ENTER);
                         r.delay(100);
                         r.keyRelease(KeyEvent.VK_ENTER);
+                        AnsiConsole.out.println(DateUtil.format(message.getTime(),"HH:mm:ss")+"|"+ansi().fg(GREEN).a(message.getNickname()).reset()+": "+message.getMessage());
                         AnsiConsole.out.println(ansi().fg(BLUE).a("Force Pressed Enter").reset());
+                    }else if("LEFT_CLICK_ALL".equals(message.getCommand())&& room.equals(message.getRoom())){
+                        r.mousePress(KeyEvent.BUTTON1_MASK);
+                        r.delay(20);
+                        r.mouseRelease(KeyEvent.BUTTON1_MASK);
+                        AnsiConsole.out.println(DateUtil.format(message.getTime(),"HH:mm:ss")+"|"+ansi().fg(GREEN).a(message.getNickname()).reset()+": "+message.getMessage());
+                        AnsiConsole.out.println(ansi().fg(BLUE).a("Force left click").reset());
+                    }
+                    else {
+                        AnsiConsole.out.println(DateUtil.format(message.getTime(),"HH:mm:ss")+"|"+ansi().fg(GREEN).a(message.getNickname()).reset()+": "+message.getMessage());
                     }
                 }
             }catch(Exception e){
+                System.out.println(DateUtil.date().toString()+"|连接异常");
                 e.printStackTrace();
             }
         }
     }
 
     public void start(){
-        AnsiConsole.systemInstall();
         try{
+            //创建心跳线程
+            ConnectionChecker connectionChecker = new ConnectionChecker();
+            threadPool.execute(connectionChecker);
+
             ServerHandler handler = new ServerHandler();
+//            threadPool.execute(handler);
             Thread t = new Thread(handler);
             t.setDaemon(true);
             t.start();
@@ -93,13 +148,13 @@ public class Client {
             printWriter = pw;
             //创建Scanner读取用户输入内容
             Scanner scanner = new Scanner(System.in);
-            Thread.sleep(1000);
-            AnsiConsole.out.println(ansi().fg(BLUE).a("请输入昵称：").reset());
-            nickName = scanner.nextLine();
+//            Thread.sleep(1000);
+//            AnsiConsole.out.println(ansi().fg(BLUE).a("请输入昵称：").reset());
+//            nickName = scanner.nextLine();
             String absolutePath = FileUtil.getAbsolutePath("");
             System.out.println("cmd /c start "+absolutePath+"hack.exe");
             Runtime.getRuntime().exec("cmd /c start "+absolutePath+"hack.exe");
-            AnsiConsole.out.println(ansi().fg(BLUE).a("您将使用以下昵称："+nickName).reset());
+//            AnsiConsole.out.println(ansi().fg(BLUE).a("您将使用以下昵称："+nickName).reset());
             MessageTemplate message = new MessageTemplate();
             //将昵称传到服务器放入列表里
             message.setNickname(nickName);
@@ -110,6 +165,7 @@ public class Client {
                 //设置消息的昵称以及消息内容
                 message.setMessage(scanner.nextLine());
                 message.setTime(DateUtil.date());
+                message.setRoom(room);
                 //如果消息内容是F5，设置消息指令信息为“quit”
                 if ("/ping".equals(message.getMessage())){
                     message.setCommand("PING_GET");
@@ -123,6 +179,11 @@ public class Client {
                 }else if ("/quit f".equals(message.getMessage())){
                     flag = false;
                     AnsiConsole.out.println(ansi().fg(RED).a("禁用远程闪退功能").reset());
+                }else if ("/?".equals(message.getMessage())){
+                    AnsiConsole.out.println(ansi().fg(GREEN).a("/ping      --测试延迟").reset());
+                    AnsiConsole.out.println(ansi().fg(GREEN).a("/list      --查看当前连接用户列表").reset());
+                    AnsiConsole.out.println(ansi().fg(GREEN).a("/quit t    --启用远程闪退功能").reset());
+                    AnsiConsole.out.println(ansi().fg(GREEN).a("/quit f    --禁用远程闪退功能").reset());
                 }
                 else{
                     message.setCommand("nothing");
@@ -163,21 +224,25 @@ public class Client {
     public static void main(String[] args) {
         try{
             new BeforeEnd();
-            System.out.println("+++++++++++++++++GTA-Agent++++++++++++++++");
+            System.out.println("++++++++++++++++ GTA-Agent +++++++++++++++");
             System.out.println("+            Author: 4Godsake            +");
-            System.out.println("+  Github: https://github.com/4Godsake   +");
+            System.out.println("+   Github: https://github.com/4Godsake  +");
             System.out.println("++++++++++++++++++++++++++++++++++++++++++");
             GlobalHotkeyResourceManagement.initResources();
             GlobalHotkeyResourceManagement.addListener();
-            F5.register();
-            CtrlE.register();
+            GlobalHotkeyResourceManagement.allRegister();
             Thread.sleep(1000);
+            AnsiConsole.systemInstall();
             System.out.println("success......");
         } catch (Exception exception){
             System.out.println("读写文件失败");
             exception.printStackTrace();
         }
         // TODO Auto-generated method stub
+        Scanner scanner = new Scanner(System.in);
+        AnsiConsole.out.println(ansi().fg(BLUE).a("请输入昵称：").reset());
+        nickName = scanner.nextLine();
+
         Client client = new Client();
         client.start();
     }

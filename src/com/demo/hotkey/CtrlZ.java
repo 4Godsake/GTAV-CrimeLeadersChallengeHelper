@@ -8,18 +8,16 @@ import com.melloware.jintellitype.HotkeyListener;
 import com.melloware.jintellitype.JIntellitype;
 import com.melloware.jintellitype.JIntellitypeConstants;
 
-import java.security.MessageDigest;
-
-public class CtrlE {
+public class CtrlZ {
 
 
     public static void register() {
-        JIntellitype.getInstance().registerHotKey(99, JIntellitypeConstants.MOD_CONTROL, (int)'E');
+        JIntellitype.getInstance().registerHotKey(77, JIntellitypeConstants.MOD_CONTROL, (int)'Z');
 //        System.out.println("register for CTRL+E...");
     }
 
     public static void unregister() {
-        JIntellitype.getInstance().unregisterHotKey(99);
+        JIntellitype.getInstance().unregisterHotKey(77);
         System.out.println("unregister for CTRL+E...");
     }
 
@@ -27,13 +25,13 @@ public class CtrlE {
         JIntellitype.getInstance().addHotKeyListener(new HotkeyListener() {
             @Override
             public void onHotKey(int key) {
-                if(key == 99) {         //你要做的事
-                    System.out.println("you have pressed Ctrl+E");
+                if(key == 77) {         //你要做的事
+                    System.out.println("you have pressed Ctrl+Z");
                     MessageTemplate quitMessage = new MessageTemplate();
                     quitMessage.setNickname(Client.nickName);
                     quitMessage.setTime(DateUtil.date());
                     quitMessage.setMessage("");
-                    quitMessage.setCommand("ENTER");
+                    quitMessage.setCommand("LEFT_CLICK");
                     quitMessage.setRoom(Client.room);
                     String messageJson = JSON.toJSONString(quitMessage);
                     Client.printWriter.println(messageJson);
